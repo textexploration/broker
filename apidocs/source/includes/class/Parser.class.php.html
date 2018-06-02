@@ -1769,7 +1769,7 @@ class Parser {
             $this-&gt;errors [] = &quot;mtas - document - {$key} should be boolean&quot;;
           }
         } else if ($key == &quot;list&quot; || $key == &quot;ignoreList&quot;) {
-          if (! is_array ( $value ) || count ( $value ) == 0) {
+          if (! is_array ( $value )) {
             $this-&gt;errors [] = &quot;mtas - document - {$key} should be non empty array of strings&quot;;
           } else {
             foreach ( $value as $valueItem ) {
@@ -1900,7 +1900,7 @@ class Parser {
             }
           }
         } else if ($key == &quot;list&quot; || $key == &quot;ignoreList&quot;) {
-          if (! is_array ( $value ) || count ( $value ) == 0) {
+          if (! is_array ( $value )) {
             $this-&gt;errors [] = &quot;mtas - termvector - {$key} should be non empty array of strings&quot;;
           } else {
             foreach ( $value as $subValue ) {
@@ -2207,7 +2207,7 @@ class Parser {
               } else if (! is_string ( $value )) {
                 $this-&gt;errors [] = &quot;mtas - collection - {$key} should be string&quot;;
               }
-            } else if ($key == &quot;configuration&quot; || $key == &quot;collection&quot;) {
+            } else if ($key == &quot;configuration&quot; || $key == &quot;collection&quot; || $key == &quot;url&quot;) {
               if ($object-&gt;action != &quot;import&quot;) {
                 $this-&gt;warnings [] = &quot;mtas - collection - {$key} not expected for &quot; . $object-&gt;action;
               } else if (! is_string ( $value )) {
@@ -2661,9 +2661,10 @@ class Parser {
           if (! in_array ( &quot;to&quot;, $keys )) {
             $this-&gt;errors [] = &quot;condition - no to defined&quot;;
           }
-          if (! in_array ( &quot;condition&quot;, $keys ) &amp;&amp; ! in_array ( &quot;filter&quot;, $keys )) {
-            $this-&gt;errors [] = &quot;condition - no filter or condition defined for &quot; . $object-&gt;type;
-          }
+//           User can decide if this is necessary          
+//           if (! in_array ( &quot;condition&quot;, $keys ) &amp;&amp; ! in_array ( &quot;filter&quot;, $keys )) {
+//             $this-&gt;errors [] = &quot;condition - no filter or condition defined for &quot; . $object-&gt;type;
+//           }
         }
       }
       return $object;
@@ -3859,7 +3860,7 @@ class Parser {
       if (isset ( $object-&gt;ignoreRegexp ) &amp;&amp; is_string ( $object-&gt;ignoreRegexp )) {
         $requestList [] = &quot;mtas.document.&quot; . $i . &quot;.ignoreRegexp=&quot; . urlencode ( $object-&gt;ignoreRegexp );
       }
-      if (isset ( $object-&gt;list ) &amp;&amp; is_array ( $object-&gt;list )) {
+      if (isset ( $object-&gt;list ) &amp;&amp; is_array ( $object-&gt;list ) &amp;&amp; count($object-&gt;list)&gt;0) {
         $requestList [] = &quot;mtas.document.&quot; . $i . &quot;.list=&quot; . urlencode ( implode ( &quot;,&quot;, str_replace ( &quot;,&quot;, &quot;\\,&quot;, str_replace ( &quot;\\&quot;, &quot;\\\\&quot;, $object-&gt;list ) ) ) );
       }
       if (isset ( $object-&gt;listRegexp ) &amp;&amp; is_bool ( $object-&gt;listRegexp )) {
@@ -3871,7 +3872,7 @@ class Parser {
       if (isset ( $object-&gt;listExpandNumber ) &amp;&amp; is_int ( $object-&gt;listExpandNumber )) {
         $requestList [] = &quot;mtas.document.&quot; . $i . &quot;.listExpandNumber=&quot; . urlencode ( $object-&gt;listExpandNumber );
       }
-      if (isset ( $object-&gt;ignoreList ) &amp;&amp; is_array ( $object-&gt;ignoreList )) {
+      if (isset ( $object-&gt;ignoreList ) &amp;&amp; is_array ( $object-&gt;ignoreList ) &amp;&amp; count($object-&gt;ignoreList)&gt;0) {
         $requestList [] = &quot;mtas.document.&quot; . $i . &quot;.ignoreList=&quot; . urlencode ( implode ( &quot;,&quot;, $object-&gt;ignoreList ) );
       }
       if (isset ( $object-&gt;ignoreListRegexp ) &amp;&amp; is_bool ( $object-&gt;ignoreListRegexp )) {
@@ -3990,13 +3991,13 @@ class Parser {
       if (isset ( $object-&gt;ignorRegexp ) &amp;&amp; is_string ( $object-&gt;ignoreRegexp )) {
         $requestList [] = &quot;mtas.termvector.&quot; . $i . &quot;.ignoreRegexp=&quot; . urlencode ( $object-&gt;ignoreRegexp );
       }
-      if (isset ( $object-&gt;list ) &amp;&amp; is_array ( $object-&gt;list )) {
+      if (isset ( $object-&gt;list ) &amp;&amp; is_array ( $object-&gt;list ) &amp;&amp; count($object-&gt;list)&gt;0) {
         $requestList [] = &quot;mtas.termvector.&quot; . $i . &quot;.list=&quot; . urlencode ( implode ( &quot;,&quot;, str_replace ( &quot;,&quot;, &quot;\\,&quot;, str_replace ( &quot;\\&quot;, &quot;\\\\&quot;, $object-&gt;list ) ) ) );
       }
       if (isset ( $object-&gt;listRegexp ) &amp;&amp; is_bool ( $object-&gt;listRegexp )) {
         $requestList [] = &quot;mtas.termvector.&quot; . $i . &quot;.listRegexp=&quot; . urlencode ( $object-&gt;listRegexp ? &quot;true&quot; : &quot;false&quot; );
       }
-      if (isset ( $object-&gt;ignoreList ) &amp;&amp; is_array ( $object-&gt;ignoreList )) {
+      if (isset ( $object-&gt;ignoreList ) &amp;&amp; is_array ( $object-&gt;ignoreList ) &amp;&amp; count($object-&gt;ignoreList)&gt;0) {
         $requestList [] = &quot;mtas.termvector.&quot; . $i . &quot;.ignoreList=&quot; . urlencode ( implode ( &quot;,&quot;, $object-&gt;ignoreList ) );
       }
       if (isset ( $object-&gt;ignoreListRegexp ) &amp;&amp; is_bool ( $object-&gt;ignoreListRegexp )) {
@@ -4251,7 +4252,7 @@ class Parser {
         }
         if (isset ( $object-&gt;grouping-&gt;left ) &amp;&amp; is_array ( $object-&gt;grouping-&gt;left )) {
           for($j = 0; $j &lt; count ( $object-&gt;grouping-&gt;left ); $j ++) {
-            if (isset ( $object-&gt;grouping-&gt;left [$j]-&gt;prefixes ) &amp;&amp; is_string ( $object-&gt;grouping-&gt;leftt [$j]-&gt;prefixes )) {
+            if (isset ( $object-&gt;grouping-&gt;left [$j]-&gt;prefixes ) &amp;&amp; is_string ( $object-&gt;grouping-&gt;left [$j]-&gt;prefixes )) {
               $requestList [] = &quot;mtas.group.&quot; . $i . &quot;.grouping.left.&quot; . $j . &quot;.prefixes=&quot; . urlencode ( $object-&gt;grouping-&gt;left [$j]-&gt;prefixes );
             }
             if (isset ( $object-&gt;grouping-&gt;left [$j]-&gt;position ) &amp;&amp; (is_string ( $object-&gt;grouping-&gt;left [$j]-&gt;position ) || is_int ( $object-&gt;grouping-&gt;left [$j]-&gt;position ))) {
@@ -4320,6 +4321,9 @@ class Parser {
         if (isset ( $this-&gt;configuration-&gt;config [&quot;solr&quot;] [$object-&gt;configuration] ) &amp;&amp; isset ( $this-&gt;configuration-&gt;config [&quot;solr&quot;] [$object-&gt;configuration] [&quot;url&quot;] )) {
           $requestList [] = &quot;mtas.collection.&quot; . $i . &quot;.url=&quot; . urlencode ( $this-&gt;configuration-&gt;config [&quot;solr&quot;] [$object-&gt;configuration] [&quot;url&quot;] );
         }
+      }
+      if (isset ( $object-&gt;url ) &amp;&amp; is_string ( $object-&gt;url )) {
+        $requestList [] = &quot;mtas.collection.&quot; . $i . &quot;.url=&quot; . urlencode ( $object-&gt;url );
       }
       $object-&gt;__requestList = $requestList;
       return $object;

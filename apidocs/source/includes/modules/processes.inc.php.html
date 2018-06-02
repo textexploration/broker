@@ -71,14 +71,14 @@ if (! $authentication-&gt;accessBasedOnLogin ()) {
               $response [&quot;error&quot;] = &quot;no (valid) configuration in request&quot;;
             } else if($configuration-&gt;solr[$apiRequest-&gt;configuration][&quot;mtasHandler&quot;]) {
               $coreUrl = $configuration-&gt;config [&quot;solr&quot;] [$apiRequest-&gt;configuration] [&quot;url&quot;].$configuration-&gt;solr[$apiRequest-&gt;configuration][&quot;mtasHandler&quot;];
-              $ch = curl_init ( $coreUrl . &quot;?action=&quot;.urlencode($apiRequest-&gt;type) );
+              $ch = curl_init ( $coreUrl . &quot;?action=&quot;.urlencode($apiRequest-&gt;type).&quot;&amp;key=&quot;.((isset($apiRequest-&gt;key)&amp;&amp;is_string($apiRequest-&gt;key))?urlencode($apiRequest-&gt;key):&quot;&quot;) );
               $options = array (
                   CURLOPT_RETURNTRANSFER =&gt; true
               );
               curl_setopt_array ( $ch, $options );
               $result = curl_exec ( $ch );
-              if ($data = json_decode ( $result ) &amp; isset($data-&gt;running)) {
-                $response [&quot;data&quot;] = $data-&gt;running;
+              if ($data = json_decode ( $result )) {
+                $response [&quot;data&quot;] = $data;
               } else {
                 $response [&quot;status&quot;] = &quot;error&quot;;
                 $response [&quot;data&quot;] = $result;
