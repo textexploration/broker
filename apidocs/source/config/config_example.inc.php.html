@@ -68,6 +68,7 @@ $authentication = array (
 $solr = array ( 
     &quot;config1&quot; =&gt; array (
         &quot;url&quot; =&gt; &quot;http://localhost:8983/solr/core1/&quot;,
+        &quot;maxTimeAllowed&quot; =&gt; 300000,
         &quot;shards&quot; =&gt; array ( 
             &quot;http://localhost:8983/solr/core2/&quot;,
             &quot;http://localhost:8983/solr/core3/&quot;,
@@ -87,6 +88,13 @@ $solr = array (
         &quot;exampleMtasPrefixPos&quot;=&gt;&quot;pos&quot;,
         &quot;exampleMtasPrefixPosValues&quot;=&gt;null,
     ),         
+);
+
+$cache = array(
+    &quot;lifetime&quot; =&gt; 3000,
+    &quot;softlimit&quot; =&gt; 800,
+    &quot;hardlimit&quot; =&gt; 1000,
+    &quot;timelimit&quot; =&gt; 60
 );
 ?&gt;</pre>
         <script type="text/javascript">

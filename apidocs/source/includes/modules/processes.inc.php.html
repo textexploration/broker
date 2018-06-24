@@ -51,12 +51,8 @@ if (! $authentication-&gt;accessBasedOnLogin ()) {
         header ( &quot;Location: &quot; . $configuration-&gt;url ( &quot;processes&quot;) );
         exit ();
       }      
-      if ($_GET [&quot;suboperation&quot;] == &quot;running&quot;) {
-        $smarty-&gt;assign ( &quot;_processesType&quot;, &quot;running&quot; );
-      } else if ($_GET [&quot;suboperation&quot;] == &quot;history&quot;) {
-        $smarty-&gt;assign ( &quot;_processesType&quot;, &quot;history&quot; );
-      } else if ($_GET [&quot;suboperation&quot;] == &quot;error&quot;) {
-        $smarty-&gt;assign ( &quot;_processesType&quot;, &quot;error&quot; );
+      if ($_GET [&quot;suboperation&quot;] == &quot;running&quot; || $_GET [&quot;suboperation&quot;] == &quot;history&quot; || $_GET [&quot;suboperation&quot;] == &quot;error&quot;) {
+        $smarty-&gt;assign ( &quot;_processesType&quot;, $_GET [&quot;suboperation&quot;] );
       } else if ($_GET [&quot;suboperation&quot;] == &quot;api&quot;) {
         if (strtoupper ( $_SERVER ['REQUEST_METHOD'] ) == &quot;POST&quot;) {
           $response = array ();
@@ -76,9 +72,9 @@ if (! $authentication-&gt;accessBasedOnLogin ()) {
                   CURLOPT_RETURNTRANSFER =&gt; true
               );
               curl_setopt_array ( $ch, $options );
-              $result = curl_exec ( $ch );
+              $result = curl_exec ( $ch ); 
               if ($data = json_decode ( $result )) {
-                $response [&quot;data&quot;] = $data;
+                $response [&quot;data&quot;] = $data; 
               } else {
                 $response [&quot;status&quot;] = &quot;error&quot;;
                 $response [&quot;data&quot;] = $result;

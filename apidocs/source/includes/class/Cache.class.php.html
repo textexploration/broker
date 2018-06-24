@@ -53,13 +53,51 @@ class Cache extends Database {
    */
   private $lifetime = 3000;
   /**
+   * Softlimit
+   *
+   * @var number
+   */
+  private $softlimit = 800;
+  /**
+   * Hardlimit
+   *
+   * @var number
+   */
+  private $hardlimit = 1000;
+  /**
+   * Timelimit
+   *
+   * @var number
+   */
+  private $timelimit = 60;
+  /**
    * Constructor
    *
-   * @param string $directory          
-   * @param unknown $configuration          
+   * @param string $directory
+   * @param object $configuration
    */
   public function __construct($directory, $configuration) {
-    parent::__construct($directory, $configuration, &quot;cache&quot;);
+    parent::__construct ( $directory, $configuration, &quot;cache&quot; );
+    if(isset($configuration-&gt;config[&quot;cache&quot;])) {
+      if(isset($configuration-&gt;config[&quot;cache&quot;][&quot;lifetime&quot;])) {
+        $this-&gt;lifetime = intval($configuration-&gt;config[&quot;cache&quot;][&quot;lifetime&quot;]);
+      }
+      if(isset($configuration-&gt;config[&quot;cache&quot;][&quot;softlimit&quot;])) {
+        $this-&gt;softlimit = intval($configuration-&gt;config[&quot;cache&quot;][&quot;softlimit&quot;]);
+      }
+      if(isset($configuration-&gt;config[&quot;cache&quot;][&quot;hardlimit&quot;])) {
+        $this-&gt;hardlimit = intval($configuration-&gt;config[&quot;cache&quot;][&quot;hardlimit&quot;]);
+      }
+      if(isset($configuration-&gt;config[&quot;cache&quot;][&quot;timelimit&quot;])) {
+        $this-&gt;timelimit = intval($configuration-&gt;config[&quot;cache&quot;][&quot;timelimit&quot;]);
+      }
+    }
+    //check
+    if($this-&gt;softlimit&lt;=0 || $this-&gt;softlimit&gt;$this-&gt;hardlimit) {
+      die(&quot;invalid soft/hard limit for cache&quot;);
+    } else if($this-&gt;lifetime&lt;=0 || $this-&gt;timelimit&lt;=0) {
+      die(&quot;invalid time setting in cache&quot;);
+    }
   }
   /**
    * Init
@@ -85,11 +123,11 @@ class Cache extends Database {
   /**
    * Create
    *
-   * @param string $configuration          
-   * @param string $url          
-   * @param string $request  
-   * @param string $requestAddition          
-   * @param unknown $response          
+   * @param string $configuration
+   * @param string $url
+   * @param string $request
+   * @param string $requestAddition
+   * @param object $response
    */
   public function create($configuration, $url, $request, $requestAddition, $response) {
     $this-&gt;clean ();
@@ -118,7 +156,7 @@ class Cache extends Database {
   /**
    * Get
    *
-   * @param string $hash          
+   * @param string $hash
    * @return array
    */
   public function get($hash) {
@@ -140,11 +178,23 @@ class Cache extends Database {
     }
   }
   /**
+   * Delete
+   *
+   * @param string $hash
+   */
+  public function delete($hash) {
+    $sql = &quot;DELETE FROM \&quot;cache\&quot; WHERE hash IS :hash;&quot;;
+    $query = $this-&gt;database-&gt;prepare ( $sql );
+    $query-&gt;bindValue ( &quot;:hash&quot;, $hash );
+    $query-&gt;execute ();
+    unset ( $query );
+  }
+  /**
    * Check
    *
-   * @param string $configuration          
-   * @param string $url          
-   * @param string $request          
+   * @param string $configuration
+   * @param string $url
+   * @param string $request
    * @return array
    */
   public function check($configuration, $url, $request) {
@@ -199,8 +249,8 @@ class Cache extends Database {
   /**
    * Get list
    *
-   * @param number $start          
-   * @param number $number          
+   * @param number $start
+   * @param number $number
    * @return array
    */
   public function getList($start, $number) {
@@ -235,13 +285,64 @@ class Cache extends Database {
     $query = $this-&gt;database-&gt;prepare ( $sql );
     $query-&gt;execute ();
     unset ( $query );
-  }  
+    // check limits
+    $number = $this-&gt;getSize ();
+    if ($number &gt; $this-&gt;hardlimit) {
+      // first delete everything with only one check and created longer than $this-&gt;timelimit minutes ago
+      $sql = &quot;DELETE FROM \&quot;cache\&quot; 
+              WHERE numberOfChecks = 1 
+              AND created &lt; datetime('now', '+&quot; . intval ( $this-&gt;timelimit ) . &quot; minutes');&quot;;
+      $query = $this-&gt;database-&gt;prepare ( $sql );
+      $query-&gt;execute ();
+      unset ( $query );
+      $number = $this-&gt;getSize ();
+    } else {
+      return;
+    }
+    //recheck
+    if ($number &gt; $this-&gt;hardlimit) {
+      //get expires limit
+      $sql = &quot;SELECT expires FROM \&quot;cache\&quot; 
+              ORDER BY expires DESC 
+              LIMIT :start,1;&quot;;      
+      $query = $this-&gt;database-&gt;prepare ( $sql );
+      $query-&gt;bindValue ( &quot;:start&quot;, $this-&gt;softLimit );
+      if ($query-&gt;execute ()) {
+        $result = $query-&gt;fetchAll ( \PDO::FETCH_ASSOC );
+        unset ( $query );
+        if ($result) {
+          $sql = &quot;DELETE FROM \&quot;cache\&quot;
+                  WHERE expires &gt;= :expires;&quot;;
+          $query = $this-&gt;database-&gt;prepare ( $sql );
+          $query-&gt;bindValue ( &quot;:expires&quot;, $result[&quot;expires&quot;] );
+          $query-&gt;execute ();
+        }
+      } 
+    }
+  }
+  /**
+   * Get number
+   *
+   * @return number
+   */
+  private function getSize() {
+    $sql = &quot;SELECT COUNT(\&quot;id\&quot;) AS \&quot;number\&quot; FROM \&quot;cache\&quot;;&quot;;
+    $query = $this-&gt;database-&gt;prepare ( $sql );
+    $query-&gt;execute ();
+    $result = $query-&gt;fetch ( \PDO::FETCH_ASSOC );
+    unset ( $query );
+    if ($result &amp;&amp; is_array ( $result ) &amp;&amp; isset ( $result [&quot;number&quot;] )) {
+      return intval ( $result [&quot;number&quot;] );
+    } else {
+      return 0;
+    }
+  }
   /**
    * Create hash
    *
-   * @param string $configuration          
-   * @param string $url          
-   * @param string $request          
+   * @param string $configuration
+   * @param string $url
+   * @param string $request
    * @return string
    */
   private static function createHash($configuration, $url, $request) {

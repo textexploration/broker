@@ -85,7 +85,7 @@ class Solr {
   /**
    * Configuration
    *
-   * @var unknown
+   * @var object
    */
   private $configuration = null;
   /**
@@ -111,7 +111,7 @@ class Solr {
   /**
    * Perform request and return response object
    *
-   * @return unknown
+   * @return object
    * @throws \Broker\SolrException
    */
   public function getResponse() {
@@ -151,7 +151,9 @@ class Solr {
     if (($data = json_decode ( $result ))) {
       // cache
       if ($this-&gt;cache != null &amp;&amp; ! isset ( $data-&gt;error )) {
-        $this-&gt;cache-&gt;create ( $this-&gt;configuration, $this-&gt;url . $this-&gt;handler . &quot;/&quot;, $finalRequest, $this-&gt;requestAddition, $result );
+        if(!isset($data-&gt;responseHeader) || !isset($data-&gt;responseHeader-&gt;partialResults) || !$data-&gt;responseHeader-&gt;partialResults) {
+          $this-&gt;cache-&gt;create ( $this-&gt;configuration, $this-&gt;url . $this-&gt;handler . &quot;/&quot;, $finalRequest, $this-&gt;requestAddition, $result );
+        }
       }
       // return data
       return $data;

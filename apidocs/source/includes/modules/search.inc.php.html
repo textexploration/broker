@@ -90,6 +90,17 @@ if (strtoupper ( $_SERVER ['REQUEST_METHOD'] ) == &quot;POST&quot;) {
         if ($solrResponse &amp;&amp; is_object ( $solrResponse )) {
           if (isset ( $solrResponse-&gt;error )) {
             $response [&quot;error&quot;] = $solrResponse-&gt;error;
+          } else if (isset ( $solrResponse-&gt;responseHeader ) &amp;&amp; isset ( $solrResponse-&gt;responseHeader-&gt;partialResults ) &amp;&amp; $solrResponse-&gt;responseHeader-&gt;partialResults) {
+            $partialNumber = (isset($solrResponse-&gt;response) &amp;&amp; isset($solrResponse-&gt;response-&gt;numFound))?intval($solrResponse-&gt;response-&gt;numFound):null;
+            $partialTime = (isset ($solrResponse-&gt;responseHeader) &amp;&amp; isset ($solrResponse-&gt;responseHeader-&gt;QTime))?intval($solrResponse-&gt;responseHeader-&gt;QTime):null;
+            $partialError = &quot;Only partial results&quot;;
+            if($partialNumber!==null) {
+              $partialError.=&quot;: &quot;.$partialNumber.&quot; documents&quot;;
+            }
+            if($partialTime!==null) {
+              $partialError.=&quot; found in &quot;.$partialTime.&quot; ms&quot;;
+            }
+            $response [&quot;error&quot;] = $partialError;
           } else if (isset ( $solrResponse-&gt;response )) {
             $response [&quot;status&quot;] = &quot;OK&quot;;
             $response [&quot;response&quot;] = clone $solrResponse;
