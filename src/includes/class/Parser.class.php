@@ -3057,6 +3057,13 @@ class Parser {
       return null;
     }
   }
+  /**
+   * Check page
+   *
+   * @param object $object
+   * @param string $prefix          
+   * * @return object
+   */
   private function checkPage($object, $prefix) {
     if ($object && is_object ( $object )) {
       foreach ( $object as $key => $value ) {
