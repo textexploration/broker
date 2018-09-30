@@ -21,6 +21,7 @@
     <span class="obligatory">"query" : &lt;query&gt;</span>,
     <span class="optional">"key" : &lt;string&gt;</span>,
     <span class="optional">"prefix" : &lt;string&gt;</span>,
+    <span class="optional">"page" : &lt;page&gt;</span>,
     <span class="optional">"number" : &lt;integer&gt;</span>,
     <span class="optional">"start" : &lt;integer&gt;</span>,
     <span class="optional">"left" : &lt;integer&gt;</span>,    
@@ -30,7 +31,7 @@
 ]</pre>
 </div>
 
-<div class="text">A <em>query</em> is of the form</div>
+<div class="text">The <em>query</em> is of the form</div>
 
 <div class="code">
   <pre>{
@@ -187,6 +188,57 @@
       for <em>[::exampleFieldMtasWordPrefix(prefix)::=$1]</em> in the field <em>::exampleFieldMtas(fieldName)::</em> 
       with variable <em>$1</em> defined by the explode expansion 
       of <em>::exampleFieldMtasWordPostfix0(value1)::,::exampleFieldMtasWordPostfix1(value2)::</em>.
+      </td>
+    </tr>
+  </table>
+</div>
+
+<div class="text">The optional <em>page</em>, usefull to restrict results to a specific part
+of the text, is of the form</div>
+
+<div class="code">
+  <pre>{
+  <span class="obligatory">"start" : &lt;integer&gt;</span>,
+  <span class="obligatory">"end": &lt;integer&gt;</span>,
+}</pre>
+</div>
+
+<div class="example">
+  <table>
+    <tr>
+      <td class="button">
+        <button class="json">Example 'page'</button>
+        <div class="json">{ "condition" : { "type": "cql", "field"
+          : "::exampleFieldMtas(fieldName)::", "value" :
+          "[::exampleFieldMtasEscapedPosValue0(prefix=\"value\")::]"},
+          "response": 
+            { "documents": { "start":
+              0, "rows": 1, "fields": [ "::uniqueKey::", "::exampleFieldText(fieldName)::" ] },
+              "mtas": { 
+                "kwic" : [{
+                  "field": "::exampleFieldMtas(fieldName)::",
+                  "query": {
+                    "type": "cql",
+                    "value": "[::exampleFieldMtasEscapedPosValue0(prefix=\"value\")::]"
+                  },
+                  "page": {
+                    "start": 50,
+                    "end": 100
+                  },  
+                  "number": 10,
+                  "left": 1,
+                  "right": 2,
+                  "prefix": "::exampleFieldMtasWordPrefix(prefix1)::",
+                  "output" : "hit"  
+                }]
+              }
+            }
+          }</div>
+      </td>
+      <td class="text">Get results for <em>page</em> defined by positions <em>50-100</em>
+      with prefixes <em>::exampleFieldMtasWordPrefix(prefix1)::</em> 
+      for <em>[::exampleFieldMtasPosValue0(prefix="value")::]</em> 
+      in <em>::exampleFieldMtas(fieldName)::</em>.
       </td>
     </tr>
   </table>

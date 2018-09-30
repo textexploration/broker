@@ -1394,6 +1394,14 @@ class Parser {
               $this->warnings [] = "facets - facetheatmaps - distErr should be numeric";
             }
           }
+          if (isset ( $object->maxCells )) {
+            $ignoreList [] = "maxCells";
+            if (is_numeric ( $object->maxCells )) {
+              $object->__options [] = "facet.heatmap.maxCells=".$object->maxCells;
+            } else {
+              $this->warnings [] = "facets - facetheatmaps - maxCells should be numeric";
+            }
+          }
           if (isset ( $object->ex )) {
             $ignoreList [] = "ex";
             if (is_string ( $object->ex )) {
@@ -1654,6 +1662,15 @@ class Parser {
           if (!is_null($value) && is_array ( $value ))  {
             for($i = 0; $i < count ( $value ); $i ++) {
               $object->{$key} [$i] = $this->checkResponseMtasPage ( $value [$i] );
+            }
+          } else {
+            $this->errors [] = "mtas - {$key} should be array";
+            unset ( $object->{$key} );
+          }
+        } else if ($key == "heatmap") {
+          if (!is_null($value) && is_array ( $value ))  {
+            for($i = 0; $i < count ( $value ); $i ++) {
+              $object->{$key} [$i] = $this->checkResponseMtasHeatmap ( $value [$i] );
             }
           } else {
             $this->errors [] = "mtas - {$key} should be array";
@@ -2014,6 +2031,41 @@ class Parser {
           } else {
             $object->{$key} = $this->checkResponseMtasQuery ( $value, "mtas - {$type} - {$key} - " );
           }
+        } else if ($type=="kwic" && $key == "page") {
+          if (! is_object ( $value )) {
+            $this->errors [] = "mtas - {$type} - {$key} should be object";
+          } else {
+            $object->{$key} = $this->checkPage ( $value, "mtas - {$type} - " );
+          }
+        } else if ($type=="list" && $key == "fields") {
+          if (! is_array ( $value )) {
+            $this->errors [] = "mtas - {$type} - {$key} should be list";
+          } else {
+            for($i = 0; $i < count ( $value ); $i ++) {
+              $item = $value [$i];
+              if ($item != null) {
+                if (is_string ( $item )) {
+                  if ($item == "*" || preg_match ( "/^\[[^\]]*\]$/", $item )) {
+                    // do nothing
+                  } else {
+                    if (preg_match ( "/^([^:]+):([^:]+)$/", $item, $match )) {
+                      $checkItem = $match [2];
+                    } else {
+                      $checkItem = $item;
+                    }
+                    $configurations = $this->getConfigurationsForField ( $checkItem );
+                    if (count ( $configurations ) > 0) {
+                      $this->__configurations [] = $configurations;
+                    } else {
+                      $this->warnings [] = "mtas - {$type} - field '" . $checkItem . "' not found in any configuration";
+                    }
+                  }
+                } else {
+                  $this->errors [] = "mtas - {$type} - unrecognized field type";
+                }
+              }
+            }
+          }
         } else {
           $this->warnings [] = "mtas - {$type} - {$key} not expected";
         }
@@ -2073,6 +2125,67 @@ class Parser {
         }
         if (! isset ( $object->end )) {
           $this->errors [] = "mtas - page - end is obligatory";
+        }
+      }
+      return $object;
+    } else {
+      $this->warnings [] = "mtas - page - unexpected type";
+      return null;
+    }
+  }
+  /**
+   * Check mtas heatmap
+   *
+   * @param object $object
+   * @return object
+   */
+  private function checkResponseMtasHeatmap($object) {
+    if ($object && is_object ( $object )) {
+      foreach ( $object as $key => $value ) {
+        if ($key == "heatmapField" || $key == "queryField") {
+          if (! is_string ( $value )) {
+            $this->errors [] = "mtas - heatmap - {$key} should be string";
+          } else {
+            $configurations = $this->getConfigurationsForField ( $value );
+            if (count ( $configurations ) > 0) {
+              $this->__configurations [] = $configurations;
+            } else {
+              $this->errors [] = "mtas - heatmap - {$key} :  '" . $value . "' not found in any configuration";
+            }
+          }
+        } else if ($key == "queries") {
+          if (! is_array ( $value ) || count ( $object->queries ) == 0) {
+            $this->errors [] = "mtas - heatmap - {$key} should be array";
+          } else {
+            for($i = 0; $i < count ( $value ); $i ++) {
+              $object->{$key} [$i] = $this->checkResponseMtasQuery ( $value [$i], "mtas - heatmap - query - " );
+            }
+          }          
+        } else if ($key == "key" || $key == "geom" || $key == "type") {
+          if (! is_string ( $value )) {
+            $this->errors [] = "mtas - heatmap - {$key} should be string";
+          } 
+        } else if ($key == "gridLevel" || $key == "maxCells") {
+          if (! is_numeric ( $value )) {
+            $this->errors [] = "mtas - heatmap - {$key} should be string";
+          }
+        } else if ($key == "minimum" || $key == "maximum") {
+          if (! is_int ( $value )) {
+            $this->errors [] = "mtas - heatmap - {$key} should be integer";
+          }
+        } else {
+          $this->warnings [] = "mtas - heatmap - {$key} not expected";
+        }
+      }
+      if (count ( $this->errors ) == 0) {
+        if (! isset ( $object->heatmapField )) {
+          $this->errors [] = "mtas - heatmap - heatmapField is obligatory";
+        }
+        if (! isset ( $object->queryField )) {
+          $this->errors [] = "mtas - heatmap - queryField is obligatory";
+        }
+        if (! isset ( $object->queries)) {
+          $this->errors [] = "mtas - heatmap - queryies is obligatory";
         }
       }
       return $object;
@@ -2941,6 +3054,29 @@ class Parser {
       return $object;
     } else {
       $this->warnings [] = "condition - unexpected type";
+      return null;
+    }
+  }
+  private function checkPage($object, $prefix) {
+    if ($object && is_object ( $object )) {
+      foreach ( $object as $key => $value ) {
+        if ($key == "start" || $key == "end") {
+          if (! is_int ( $value )) {
+            $this->warnings [] = $prefix."page - '{$key}' should be an integer";
+          }
+        } else {
+          $this->warnings [] = $prefix."page - key '{$key}' not expected";
+        }
+      }
+      if (! isset ( $object->start )) {
+        $this->errors [] = $prefix."page - no start defined";
+      }
+      if (! isset ( $object->end )) {
+        $this->errors [] = $prefix."page - no end defined";
+      }
+      return $object;
+    } else {
+      $this->warnings [] = $prefix."page - unexpected type";
       return null;
     }
   }
@@ -3865,6 +4001,16 @@ class Parser {
               }
             }
           }
+        } else if ($key == "heatmap") {
+          if ($value && is_array ( $value )) {
+            $requestList [] = "mtas.{$key}=true";
+            for($i = 0; $i < count ( $value ); $i ++) {
+              $object->{$key} [$i] = $this->parseResponseMtasHeatmap ( $object->{$key} [$i], $i );
+              if ($object->{$key} [$i] && is_object ( $object->{$key} [$i] ) && isset ( $object->{$key} [$i]->__requestList )) {
+                $requestList = array_merge ( $requestList, $object->{$key} [$i]->__requestList );
+              }
+            }
+          }
         } else if ($key == "termvector") {
           if ($value && is_array ( $value )) {
             $requestList [] = "mtas.{$key}=true";
@@ -4108,10 +4254,7 @@ class Parser {
           if (isset ( $object->queries [$j]->variables )) {
             $counter = 0;
             foreach ( $object->queries [$j]->variables->__variables as $key => $value ) {
-              $values = array ();
-              foreach ( $value as $valueItem ) {
-                $values [] = str_replace ( ",", "\\,", str_replace ( "\\", "\\\\", $valueItem ) );
-              }
+              $values = $this->createVariablesList($value);
               $requestList [] = "mtas.stats.spans." . $i . ".query." . $j . ".variable." . $counter . ".name=" . urlencode ( $key );
               $requestList [] = "mtas.stats.spans." . $i . ".query." . $j . ".variable." . $counter . ".value=" . urlencode ( implode ( ",", $values ) );
               $counter ++;
@@ -4257,6 +4400,13 @@ class Parser {
       if (isset ( $object->start ) && is_int ( $object->start )) {
         $requestList [] = "mtas.{$type}." . $i . ".start=" . urlencode ( $object->start );
       }
+      if ($type=="kwic" && isset ( $object->page ) && is_object ( $object->page )) {
+        $requestList [] = "mtas.{$type}." . $i . ".page.start=" . urlencode ( $object->page->start );
+        $requestList [] = "mtas.{$type}." . $i . ".page.end=" . urlencode ( $object->page->end );
+      }            
+      if ($type=="list" && isset ( $object->fields ) && is_array ( $object->fields )) {
+        $requestList [] = "mtas.{$type}." . $i . ".fields=" . urlencode ( implode ( ",", array_unique ( $object->fields ) ) );
+      }      
       if (isset ( $object->left ) && is_int ( $object->left )) {
         $requestList [] = "mtas.{$type}." . $i . ".left=" . urlencode ( $object->left );
       }
@@ -4282,10 +4432,7 @@ class Parser {
         if (isset ( $object->query->variables )) {
           $counter = 0;
           foreach ( $object->query->variables->__variables as $key => $value ) {
-            $values = array ();
-            foreach ( $value as $valueItem ) {
-              $values [] = str_replace ( ",", "\\,", str_replace ( "\\", "\\\\", $valueItem ) );
-            }
+            $values = $this->createVariablesList($value);
             $requestList [] = "mtas.{$type}." . $i . ".query.variable." . $counter . ".name=" . urlencode ( $key );
             $requestList [] = "mtas.{$type}." . $i . ".query.variable." . $counter . ".value=" . urlencode ( implode ( ",", $values ) );
             $counter ++;
@@ -4322,6 +4469,77 @@ class Parser {
       }
       if (isset ( $object->start ) && is_int ( $object->start )) {
         $requestList [] = "mtas.page." . $i . ".end=" . urlencode ( $object->end );
+      }
+      $object->__requestList = $requestList;
+      return $object;
+    } else {
+      return null;
+    }
+  }
+  /**
+   * Parse mtas heatmap
+   *
+   * @param object $object
+   * @param number $i
+   * @return object
+   */
+  private function parseResponseMtasHeatmap($object, $i) {
+    if ($object && is_object ( $object )) {
+      $requestList = array ();
+      if (isset ( $object->key ) && is_string ( $object->key )) {
+        $requestList [] = "mtas.heatmap." . $i . ".key=" . urlencode ( $object->key );
+      }
+      if (isset ( $object->heatmapField ) && is_string ( $object->heatmapField )) {
+        $requestList [] = "mtas.heatmap." . $i . ".heatmapField=" . urlencode ( $object->heatmapField );
+      }
+      if (isset ( $object->queryField ) && is_string ( $object->queryField )) {
+        $requestList [] = "mtas.heatmap." . $i . ".queryField=" . urlencode ( $object->queryField );
+      }
+      if (isset ( $object->geom) && is_string ( $object->geom )) {
+        $requestList [] = "mtas.heatmap." . $i . ".geom=" . urlencode ( $object->geom );
+      }
+      if (isset ( $object->gridLevel ) && is_numeric ( $object->gridLevel )) {
+        $requestList [] = "mtas.heatmap." . $i . ".gridLevel=" . intval ( $object->gridLevel );
+      }
+      if (isset ( $object->maxCells ) && is_numeric ( $object->maxCells )) {
+        $requestList [] = "mtas.heatmap." . $i . ".maxCells=" . intval ( $object->maxCells );
+      }
+      if (isset ( $object->type ) && is_string ( $object->type )) {
+        $requestList [] = "mtas.heatmap." . $i . ".type=" . urlencode ( $object->type );
+      }
+      if (isset ( $object->minimum ) && is_int ( $object->minimum )) {
+        $requestList [] = "mtas.heatmap." . $i . ".minimum=" . urlencode ( $object->minimum );
+      }
+      if (isset ( $object->maximum ) && is_int ( $object->maximum )) {
+        $requestList [] = "mtas.heatmap." . $i . ".maximum=" . urlencode ( $object->maximum );
+      }
+      if (isset ( $object->queries ) && is_array ( $object->queries )) {
+        for($j = 0; $j < count ( $object->queries ); $j ++) {
+          if (isset ( $object->queries [$j]->type ) && is_string ( $object->queries [$j]->type )) {
+            $requestList [] = "mtas.heatmap." . $i . ".query." . $j . ".type=" . urlencode ( $object->queries [$j]->type );
+          }
+          if (isset ( $object->queries [$j]->value ) && is_string ( $object->queries [$j]->value )) {
+            $requestList [] = "mtas.heatmap." . $i . ".query." . $j . ".value=" . urlencode ( $object->queries [$j]->value );
+          }
+          if (isset ( $object->queries [$j]->prefix ) && is_string ( $object->queries [$j]->prefix )) {
+            $requestList [] = "mtas.heatmap." . $i . ".query." . $j . ".prefix=" . urlencode ( $object->queries [$j]->prefix );
+          }
+          if (isset ( $object->queries [$j]->ignore ) && is_string ( $object->queries [$j]->ignore )) {
+            $requestList [] = "mtas.heatmap." . $i . ".query." . $j . ".ignore=" . urlencode ( $object->queries [$j]->ignore );
+          }
+          if (isset ( $object->queries [$j]->maximumIgnoreLength ) && is_int ( $object->queries [$j]->maximumIgnoreLength )) {
+            $requestList [] = "mtas.heatmap." . $i . ".query." . $j . ".maximumIgnoreLength=" . urlencode ( $object->queries [$j]->maximumIgnoreLength );
+          }
+          if (isset ( $object->queries [$j]->variables )) {
+            $counter = 0;
+            foreach ( $object->queries [$j]->variables->__variables as $key => $value ) {
+              $values = $this->createVariablesList($value);
+              $requestList [] = "mtas.heatmap." . $i . ".query." . $j . ".variable." . $counter . ".name=" . urlencode ( $key );
+              $requestList [] = "mtas.heatmap." . $i . ".query." . $j . ".variable." . $counter . ".value=" . urlencode ( implode ( ",", $values ) );
+              $counter ++;
+            }
+          }
+        }
       }
       $object->__requestList = $requestList;
       return $object;
@@ -4465,10 +4683,7 @@ class Parser {
           if (isset ( $object->queries [$j]->variables ) && is_object ( $object->queries [$j]->variables )) {
             $counter = 0;
             foreach ( $object->queries [$j]->variables->__variables as $key => $value ) {
-              $values = array ();
-              foreach ( $value as $valueItem ) {
-                $values [] = str_replace ( ",", "\\,", str_replace ( "\\", "\\\\", $valueItem ) );
-              }
+              $values = $this->createVariablesList($value);
               $requestList [] = "mtas.facet." . $i . ".query." . $j . ".variable." . $counter . ".name=" . urlencode ( $key );
               $requestList [] = "mtas.facet." . $i . ".query." . $j . ".variable." . $counter . ".value=" . urlencode ( implode ( ",", $values ) );
               $counter ++;
@@ -4573,10 +4788,7 @@ class Parser {
         if (isset ( $object->query->variables ) && is_object ( $object->query->variables )) {
           $counter = 0;
           foreach ( $object->query->variables->__variables as $key => $value ) {
-            $values = array ();
-            foreach ( $value as $valueItem ) {
-              $values [] = str_replace ( ",", "\\,", str_replace ( "\\", "\\\\", $valueItem ) );
-            }
+            $values = $this->createVariablesList($value);
             $requestList [] = "mtas.group." . $i . ".query.variable." . $counter . ".name=" . urlencode ( $key );
             $requestList [] = "mtas.group." . $i . ".query.variable." . $counter . ".value=" . urlencode ( implode ( ",", $values ) );
             $counter ++;
@@ -5086,13 +5298,45 @@ class Parser {
             if ($i > 0) {
               $value .= ",";
             }
-            $value .= str_replace ( ",", "\\,", str_replace ( "\\", "\\\\", $item [$i] ) );
+            $escapedItem = str_replace ( ",", "\\\\\\,", str_replace ( "\\", "\\\\", $item [$i] ) );
+            if(strpos($item[$i], "\"")!==false) {
+              $escapedItem = str_replace ( "\"", "\\\\\\\"", $escapedItem );
+              //only for cql?
+              $escapeList = array("<","(","[","{","^","-","=","$","!","|","]","}",")","?","*","+",".",">");
+              foreach($escapeList AS $escapeItem) {
+                $escapedItem = str_replace ( $escapeItem, "\\\\\\".$escapeItem, $escapedItem );
+              }
+              $escapedItem = "\\\"".$escapedItem."\\\"";
+            } 
+            $value .= $escapedItem;
           }
         }
-        $result .= "variable_{$key}=" . $this->solrEncode ( $value, "query" ) . " ";
+        $result .= "variable_{$key}=\"" . $value . "\" ";
       }
     }
     return $result;
+  }
+  /**
+   * Create variables list
+   *
+   * @param array $variables
+   * @return array
+   */
+  private function createVariablesList($variables) {
+    foreach ( $ariables as $valueItem ) {
+      $escapedItem = str_replace ( ",", "\\,", str_replace ( "\\", "\\\\", $valueItem ) );
+      if(strpos($valueItem, "\"")!==false) {
+        $escapedItem = str_replace ( "\"", "\\\"", $escapedItem );
+        //only for cql?
+        $escapeList = array("<","(","[","{","^","-","=","$","!","|","]","}",")","?","*","+",".",">");
+        foreach($escapeList AS $escapeItem) {
+          $escapedItem = str_replace ( $escapeItem, "\\".$escapeItem, $escapedItem );
+        }
+        $escapedItem = "\"".$escapedItem."\"";
+      }
+      $values [] = $escapedItem;      
+    }
+    return $values;
   }
   /**
    * Create variable combinations

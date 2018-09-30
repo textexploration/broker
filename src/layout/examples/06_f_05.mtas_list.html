@@ -20,6 +20,7 @@
     <span class="obligatory">"field" : &lt;field&gt;</span>,
     <span class="obligatory">"query" : &lt;query&gt;</span>,
     <span class="optional">"key" : &lt;string&gt;</span>,
+    <span class="optional">"fields" : [&lt;field&gt;,...]</span>,
     <span class="optional">"prefix" : &lt;string&gt;</span>,
     <span class="optional">"number" : &lt;integer&gt;</span>,
     <span class="optional">"start" : &lt;integer&gt;</span>,
@@ -30,7 +31,7 @@
 ]</pre>
 </div>
 
-<div class="text">A <em>query</em> is of the form</div>
+<div class="text">The <em>query</em> is of the form</div>
 
 <div class="code">
   <pre>{
@@ -166,6 +167,46 @@
       for <em>[::exampleFieldMtasLemmaPrefix(prefix)::=$1]</em> in the field <em>::exampleFieldMtas(fieldName)::</em> 
       with variable <em>$1</em> defined by the explode expansion 
       of <em>::exampleFieldMtasLemmaPostfix5(value1)::,::exampleFieldMtasLemmaPostfix6(value2)::</em>.
+      </td>
+    </tr>
+  </table>
+</div>
+
+<div class="text">
+  The optional <em>fields</em> can be used to include additional fields in the list. 
+  The usage of aliases is allowed.
+</div>
+
+<div class="example">
+  <table>
+    <tr>
+      <td class="button">
+        <button class="json">Example 'fields'</button>
+        <div class="json">{ 
+          "response": 
+            { "mtas": { 
+                "list" : [{
+                  "field": "::exampleFieldMtas(fieldName)::",
+                  "query": {
+                    "type": "cql",
+                    "value": "[::exampleFieldMtasEscapedWordValue0(prefix=\"value\")::]"
+                  },
+                  "start": 0,
+                  "number": 2,
+                  "left": 1,
+                  "right": 2,
+                  "prefix": "::exampleFieldMtasPosPrefix(prefix1)::,::exampleFieldMtasLemmaPrefix(prefix2)::",
+                  "fields": ["::uniqueKey::", "::exampleFieldText(fieldName)::"],
+                  "output" : "hit"  
+                }]
+              }
+            }
+          }</div>
+      </td>
+      <td class="text">Get list  
+      with prefixes <em>::exampleFieldMtasPosPrefix(prefix1)::</em> and <em>::exampleFieldMtasLemmaPrefix(prefix2)::</em> 
+      for <em>[::exampleFieldMtasWordValue0(prefix="value")::]</em> 
+      in <em>::exampleFieldMtas(fieldName)::</em>, and add <em>fields</em> to the output.
       </td>
     </tr>
   </table>

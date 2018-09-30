@@ -1,0 +1,244 @@
+<div class="title">Mtas Heatmap</div>
+
+<div class="text">
+  The mtas heatmap section occurs within the <a data-tab="mtas">mtas</a> section,
+  and describes mtas heatmaps that should be included in the
+  response. The mtas heatmap section is of the form
+</div>
+
+<div class="code">
+  <pre>[
+  {
+    <span class="obligatory">"heatmapField" : &lt;field&gt;</span>,
+    <span class="obligatory">"queryField" : &lt;field&gt;</span>,
+    <span class="obligatory">"queries" : [&lt;query&gt;]</span>,
+    <span class="optional">"geom" : &lt;string&gt;</span>,
+    <span class="optional">"gridLevel" : &lt;integer&gt;</span>,
+    <span class="optional">"distErrPct" : &lt;numeric&gt;</span>,
+    <span class="optional">"distErr" : &lt;numeric&gt;</span>,
+    <span class="optional">"maxCells" : &lt;numeric&gt;</span>,
+    <span class="optional">"key" : &lt;string&gt;</span>,
+  },... 
+]</pre>
+</div>
+
+<div class="text">Here a <em>query</em> is of the form</div>
+
+<div class="code">
+  <pre>{
+  <span class="obligatory">"type" : &lt;string&gt;</span>,
+  <span class="obligatory">"value" : &lt;string&gt;</span>,
+  <span class="optional">"prefix" : &lt;string&gt;</span>,
+  <span class="optional">"ignore" : &lt;string&gt;</span>,
+  <span class="optional">"maximumIgnoreLength " : &lt;integer&gt;</span>,
+  <span class="optional">"variables": &lt;variables&gt;</span>,
+}</pre>
+</div>
+
+<div class="text">
+  Where the optional <em>variables</em> is of the form
+</div>
+
+<div class="code">
+  <pre>{
+  <span class="obligatory">"definitions" : [</span>
+    <span class="optional">{</span>
+      <span class="obligatory">"name" : &lt;string&gt;,</span>
+      <span class="obligatory">"value": &lt;string&gt;,</span>
+      <span class="optional">"expansion" : &lt;<a data-tab="expansion">expansion</a>&gt;</span>,
+    <span class="optional">},...</span>
+  <span class="obligatory">],</span>
+}</pre>
+</div>
+
+<div class="example">
+  <table>
+    <tr>
+      <td class="button">
+        <button class="json">Example 'heatmap' - 'facet'</button>
+        <div class="json">{ "filter": {
+						  "condition": {
+						    "type": "cql",
+						    "field": "::exampleFieldMtas(fieldName)::",
+						    "value": "[::exampleFieldMtasEscapedLemmaValue0(prefix=\"value\")::]"
+						  },
+						  "tag": "exampleFilter"
+						},
+						"response": {
+						  "facets": {
+						    "facetheatmaps": [
+						      {
+						        "field": "::exampleFieldGeo(fieldName)::",
+						        "geom": "[\"2.8 50.3\" TO \"7.2 53.8\"]",
+						        "gridLevel": 3
+						      }
+						    ]
+						  },
+						  "mtas": { 
+                "heatmap" : [{
+                  "heatmapField": "::exampleFieldGeo(fieldName)::",
+                  "queryField": "::exampleFieldMtas(fieldName)::",
+                  "queries" : [{
+				            "type": "cql", 
+				            "value": "[::exampleFieldMtasEscapedLemmaValue0(prefix=\"value\")::]"
+				          }],
+				          "geom": "[\"2.8 50.3\" TO \"7.2 53.8\"]",
+				          "gridLevel": 3,
+				          "type": "n"
+                }]
+              }
+            }
+          }</div>
+      </td>
+      <td class="text">Get heatmap for <em>::exampleFieldMtasLemmaValue0(prefix=\"value\")::</em> 
+      in <em>::exampleFieldMtas(fieldName)::</em>, and compare with <em>facetheatmaps</em> for documents
+      with <em>::exampleFieldMtasLemmaValue0(prefix=\"value\")::</em>.
+      </td>
+    </tr>
+  </table>
+</div>
+
+<div class="example">
+  <table>
+    <tr>
+      <td class="button">
+        <button class="json">Example 'heatmap' - 'stats'</button>
+        <div class="json">{ 
+        "response": {
+              "mtas": { 
+                "stats": {
+					        "spans": [
+					          {
+					            "key": "stats example",
+					            "field": "text",
+					            "queries": [
+					              {
+					                "type": "cql",
+					                "value": "[::exampleFieldMtasEscapedLemmaValue0(prefix=\"value\")::]"
+					              }
+					            ],
+		                  "type": "n,sum,mean,min,max,median",
+		                  "minimum": 1
+					          }
+					        ]
+					      },
+                "heatmap" : [{
+                  "key": "heatmap example",
+                  "heatmapField": "::exampleFieldGeo(fieldName)::",
+                  "queryField": "::exampleFieldMtas(fieldName)::",
+                  "queries" : [{
+                    "type": "cql", 
+                    "value": "[::exampleFieldMtasEscapedLemmaValue0(prefix=\"value\")::]"
+                  }],
+                  "geom": "[\"2.8 50.3\" TO \"7.2 53.8\"]",
+                  "gridLevel": 3,
+                  "type": "n,sum,mean,min,max,median",
+                  "minimum": 1
+                }]
+              }
+            }
+          }</div>
+      </td>
+      <td class="text">Get heatmap for <em>::exampleFieldMtasLemmaValue0(prefix=\"value\")::</em> 
+      in <em>::exampleFieldMtas(fieldName)::</em>, and compare with <em>stats</em> for all
+      documents.
+      </td>
+    </tr>
+  </table>
+</div>
+
+<div class="example">
+  <table>
+    <tr>
+      <td class="button">
+        <button class="json">Example 'heatmap' - 'variable'</button>
+        <div class="json">{ 
+        "response": {
+              "mtas": { 
+                "heatmap" : [{
+                  "key": "heatmap example",
+                  "heatmapField": "::exampleFieldGeo(fieldName)::",
+                  "queryField": "::exampleFieldMtas(fieldName)::",
+                  "queries" : [{
+				            "type": "cql", 
+				            "value": "[::exampleFieldMtasLemmaPrefix(prefix)::=$1]",
+				            "variables" : {
+				              "definitions" : [{
+				                "name": "1",
+				                "value": "::exampleFieldMtasLemmaPostfix0(value1)::,::exampleFieldMtasLemmaPostfix1(value2)::",
+				                "expansion": {
+				                  "type": "explode"
+				                }
+				            }]
+				          }
+				          }] ,
+                  "geom": "[\"2.8 50.3\" TO \"7.2 53.8\"]",
+                  "gridLevel": 3,
+                  "type": "n,sum,mean,min,max,median",
+                  "minimum": 1
+                }]
+              }
+            }
+          }</div>
+      </td>
+      <td class="text">Get heatmap for <em>[::exampleFieldMtasLemmaPrefix(prefix)::=$1]</em> in 
+      <em>::exampleFieldMtas(fieldName)::</em> with <em>$1</em> defined as the <em>explode</em> expansion
+      of <em>::exampleFieldMtasLemmaPostfix0(value1)::,::exampleFieldMtasLemmaPostfix1(value2)::</em>.
+      </td>
+    </tr>
+  </table>
+</div>
+
+<div class="example">
+  <table>
+    <tr>
+      <td class="button">
+        <button class="json">Example 'heatmap' - 'function'</button>
+        <div class="json">{ 
+        "response": {
+              "mtas": { 
+                "heatmap" : [{
+                  "key": "heatmap example",
+                  "heatmapField": "::exampleFieldGeo(fieldName)::",
+                  "queryField": "::exampleFieldMtas(fieldName)::",
+                  "queries" : [{
+                    "type": "cql", 
+                    "value": "[::exampleFieldMtasEscapedLemmaValue0(prefix=\"value\")::]"
+                  }],
+			            "functions": [
+			              {
+			                "key": "trivial",
+			                "expression": "(1+4-8)/2",
+			                "type": "n,sum,mean"
+			              },
+			              {
+			                "key": "simple function",
+			                "expression": "2*$q0/3",
+			                "type": "n,sum,mean"
+			              },
+			              {
+			                "key": "two variables",
+			                "expression": "$q0/$n",
+			                "type": "n,sum,mean,min,max"
+			              },
+			              {
+			                "key": "error",
+			                "expression": "($n+$q0)/0",
+			                "type": "n,sum,mean"
+			              }
+			            ],
+                  "geom": "[\"2.8 50.3\" TO \"7.2 53.8\"]",
+                  "gridLevel": 3,
+                  "type": "n,sum,mean,min,max,median",
+                  "minimum": 1
+                }]
+              }
+            }
+          }</div>
+      </td>
+      <td class="text">Get heatmap for <em>::exampleFieldMtasLemmaValue0(prefix=\"value\")::</em> 
+      in <em>::exampleFieldMtas(fieldName)::</em> with functions.
+      </td>
+    </tr>
+  </table>
+</div>

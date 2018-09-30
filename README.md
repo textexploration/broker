@@ -11,3 +11,9 @@ docker run -t -i -p 8080:80 --name broker broker
 
 This will provide a website on port 8080 on the ip of your docker host with a running Broker.
 
+---
+
+This project builds upon the latest commit from April 12, 2018 for [meertensinstituut/mtas](https://github.com/meertensinstituut/broker/tree/ff23503afbd9dfe95042774a962a75df7fcbed06). See also the related [mtas](https://github.com/textexploration/broker) project, another continuation of previous work.
+
+
+

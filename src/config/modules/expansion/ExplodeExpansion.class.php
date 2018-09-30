@@ -22,6 +22,11 @@ class ExplodeExpansion implements \Broker\Expansion {
    */
   private $split = ",";
   /**
+   * Escape string
+   * @var string
+   */
+  private $escape = "\\";
+  /**
    * Trim
    * @var boolean
    */
@@ -82,7 +87,20 @@ class ExplodeExpansion implements \Broker\Expansion {
    * @see \Broker\Expansion::getValues()
    */
   public function getValues() {
-    $list = explode ( $this->split, $this->value );
+    $partlist = explode($this->escape.$this->split, $this->value);
+    $list = array();
+    for($i=0; $i<count($partlist); $i++) {
+      $sublist = explode ( $this->split, $partlist[$i] );
+      if($i>0) {
+        $list[count($list)-1] = $list[count($list)-1].$this->escape.$this->split.$sublist[0];
+        for($j=1; $j<count($sublist); $j++) {
+          $list[] = $sublist[$j];
+        }
+      } else {
+        $list = $sublist;
+      }
+    }
+    $list = array_map(function($item) {return str_replace("\\\\","\\",str_replace("\\,",",",$item));},$list);
     if ($this->trim) {
       $list = array_map ( "trim", $list );
     }
