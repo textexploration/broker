@@ -286,6 +286,7 @@ class Configuration {
           $this-&gt;solr [$key] [&quot;typeDate&quot;] = array ();
           $this-&gt;solr [$key] [&quot;typeLong&quot;] = array ();
           $this-&gt;solr [$key] [&quot;typeBinary&quot;] = array ();
+          $this-&gt;solr [$key] [&quot;typeGeo&quot;] = array ();
           // get handler
           $ch = curl_init ( $solrConfiguration [&quot;url&quot;] . &quot;select?q=*:*&amp;rows=0&amp;mtas=true&amp;mtas.status=true&amp;mtas.status.mtasHandler=true&amp;wt=json&quot; );
           $options = array (
@@ -325,6 +326,7 @@ class Configuration {
               $fieldTypes [&quot;long&quot;] = array ();
               $fieldTypes [&quot;date&quot;] = array ();
               $fieldTypes [&quot;binary&quot;] = array ();
+              $fieldTypes [&quot;geo&quot;] = array();
               $fieldTypes [&quot;mtas&quot;] = array ();
               if (isset ( $data [&quot;schema&quot;] [&quot;fieldTypes&quot;] ) &amp;&amp; is_array ( $data [&quot;schema&quot;] [&quot;fieldTypes&quot;] )) {
                 foreach ( $data [&quot;schema&quot;] [&quot;fieldTypes&quot;] as $item ) {
@@ -344,6 +346,8 @@ class Configuration {
                         $fieldTypes [&quot;date&quot;] [] = $item [&quot;name&quot;];
                       } else if ($item [&quot;class&quot;] == &quot;solr.BinaryField&quot;) {
                         $fieldTypes [&quot;binary&quot;] [] = $item [&quot;name&quot;];
+                      } else if ($item [&quot;class&quot;] == &quot;solr.RptWithGeometrySpatialField&quot;) {
+                        $fieldTypes [&quot;geo&quot;] [] = $item [&quot;name&quot;];
                       }
                     }
                     if (isset ( $item [&quot;postingsFormat&quot;] ) &amp;&amp; is_string ( $item [&quot;postingsFormat&quot;] )) {
@@ -384,6 +388,9 @@ class Configuration {
               list ( $this-&gt;solr [$key] [&quot;exampleFieldInteger&quot;], $this-&gt;solr [$key] [&quot;exampleFieldIntegerValues&quot;] ) = $this-&gt;_findExample ( isset ( $solrConfiguration [&quot;exampleFieldInteger&quot;] ) ? $solrConfiguration [&quot;exampleFieldInteger&quot;] : null, isset ( $solrConfiguration [&quot;exampleFieldIntegerValues&quot;] ) ? $solrConfiguration [&quot;exampleFieldIntegerValues&quot;] : null, $this-&gt;solr [$key], $solrConfiguration, array (
                   &quot;year&quot; 
               ), &quot;integer/long&quot;, true, null, true, null, false );
+              list ( $this-&gt;solr [$key] [&quot;exampleFieldGeo&quot;], $this-&gt;solr [$key] [&quot;exampleFieldGeoValues&quot;] ) = $this-&gt;_findExample ( isset ( $solrConfiguration [&quot;exampleFieldGeo&quot;] ) ? $solrConfiguration [&quot;exampleFieldGeo&quot;] : null, isset ( $solrConfiguration [&quot;exampleFieldGeoValues&quot;] ) ? $solrConfiguration [&quot;exampleFieldGeoValues&quot;] : null, $this-&gt;solr [$key], $solrConfiguration, array (
+                  &quot;latlng&quot;
+              ), &quot;geo&quot;, true, null, true, null, false );
               list ( $this-&gt;solr [$key] [&quot;exampleFieldMtas&quot;], $this-&gt;solr [$key] [&quot;exampleFieldMtasWord&quot;], $this-&gt;solr [$key] [&quot;exampleFieldMtasLemma&quot;], $this-&gt;solr [$key] [&quot;exampleFieldMtasPos&quot;], $this-&gt;solr [$key] [&quot;exampleFieldMtasSinglePosition&quot;], $this-&gt;solr [$key] [&quot;exampleFieldMtasMultiplePosition&quot;], $this-&gt;solr [$key] [&quot;exampleFieldMtasSetPosition&quot;], $this-&gt;solr [$key] [&quot;exampleFieldMtasIntersecting&quot;] ) = $this-&gt;_findMtasExamples ( isset ( $solrConfiguration [&quot;exampleFieldMtas&quot;] ) ? $solrConfiguration [&quot;exampleFieldMtas&quot;] : null, $this-&gt;solr [$key], $solrConfiguration, array (
                   &quot;mtas&quot; 
               ) );
@@ -411,7 +418,11 @@ class Configuration {
                     if (isset ( $queryParserConfig [&quot;name&quot;] ) &amp;&amp; is_string ( $queryParserConfig [&quot;name&quot;] )) {
                       $this-&gt;solr [$key] [&quot;queryParserCql&quot;] = $queryParserConfig [&quot;name&quot;];
                     }
-                  } else if (is_array ( $queryParserConfig ) &amp;&amp; isset ( $queryParserConfig [&quot;class&quot;] ) &amp;&amp; $queryParserConfig [&quot;class&quot;] == &quot;mtas.solr.search.MtasSolrJoinQParserPlugin&quot;) {
+                  } else if (is_array ( $queryParserConfig ) &amp;&amp; isset ( $queryParserConfig [&quot;class&quot;] ) &amp;&amp; $queryParserConfig [&quot;class&quot;] == &quot;mtas.solr.search.MtasSolrSimpleQParserPlugin&quot;) {
+                    if (isset ( $queryParserConfig [&quot;name&quot;] ) &amp;&amp; is_string ( $queryParserConfig [&quot;name&quot;] )) {
+                      $this-&gt;solr [$key] [&quot;queryParserSimple&quot;] = $queryParserConfig [&quot;name&quot;];
+                    }
+                  } elseif (is_array ( $queryParserConfig ) &amp;&amp; isset ( $queryParserConfig [&quot;class&quot;] ) &amp;&amp; $queryParserConfig [&quot;class&quot;] == &quot;mtas.solr.search.MtasSolrJoinQParserPlugin&quot;) {
                     if (isset ( $queryParserConfig [&quot;name&quot;] ) &amp;&amp; is_string ( $queryParserConfig [&quot;name&quot;] )) {
                       $this-&gt;solr [$key] [&quot;queryParserJoin&quot;] = $queryParserConfig [&quot;name&quot;];
                     }
@@ -470,6 +481,8 @@ class Configuration {
         $configuration [&quot;typeDate&quot;] [] = $item [&quot;name&quot;];
       } else if (in_array ( $item [&quot;type&quot;], $fieldTypes [&quot;binary&quot;] )) {
         $configuration [&quot;typeBinary&quot;] [] = $item [&quot;name&quot;];
+      } else if (in_array ( $item [&quot;type&quot;], $fieldTypes [&quot;geo&quot;] )) {
+        $configuration [&quot;typeGeo&quot;] [] = $item [&quot;name&quot;];
       }
     }
     return $configuration;
@@ -534,6 +547,11 @@ class Configuration {
               break;
             case &quot;integer/long&quot; :
               if (! in_array ( $checkField, $configuration [&quot;typeInteger&quot;] ) &amp;&amp; ! in_array ( $checkField, $configuration [&quot;typeLong&quot;] )) {
+                continue 2;
+              }
+              break;
+            case &quot;geo&quot; :
+              if (! in_array ( $checkField, $configuration [&quot;typeGeo&quot;] )) {
                 continue 2;
               }
               break;
