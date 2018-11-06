@@ -2205,6 +2205,14 @@ class Parser {
           if (! is_numeric ( $value )) {
             $this-&gt;errors [] = &quot;mtas - heatmap - {$key} should be string&quot;;
           }
+        } else if ($key == &quot;functions&quot;) {
+          if (! is_array ( $value )) {
+            $this-&gt;errors [] = &quot;mtas - heatmap - {$key} should be array&quot;;
+          } else {
+            for($i = 0; $i &lt; count ( $value ); $i ++) {
+              $object-&gt;{$key} [$i] = $this-&gt;checkMtasStatsFunction ( $value [$i], &quot;mtas - heatmap - query - &quot; );
+            }
+          }
         } else if ($key == &quot;minimum&quot; || $key == &quot;maximum&quot;) {
           if (! is_int ( $value )) {
             $this-&gt;errors [] = &quot;mtas - heatmap - {$key} should be integer&quot;;
@@ -4553,6 +4561,21 @@ class Parser {
       if (isset ( $object-&gt;minimum ) &amp;&amp; is_int ( $object-&gt;minimum )) {
         $requestList [] = &quot;mtas.heatmap.&quot; . $i . &quot;.minimum=&quot; . urlencode ( $object-&gt;minimum );
       }
+      if (isset ( $object-&gt;functions ) &amp;&amp; is_array ( $object-&gt;functions )) {
+        for($k = 0; $k &lt; count ( $object-&gt;functions ); $k ++) {
+          if (is_object ( $object-&gt;functions [$k] )) {
+            if (isset ( $object-&gt;functions [$k]-&gt;key ) &amp;&amp; is_string ( $object-&gt;functions [$k]-&gt;key )) {
+              $requestList [] = &quot;mtas.heatmap.&quot; . $i . &quot;.function.&quot; . $k . &quot;.key=&quot; . urlencode ( $object-&gt;functions [$k]-&gt;key );
+            }
+            if (isset ( $object-&gt;functions [$k]-&gt;expression ) &amp;&amp; is_string ( $object-&gt;functions [$k]-&gt;expression )) {
+              $requestList [] = &quot;mtas.heatmap.&quot; . $i . &quot;.function.&quot; . $k . &quot;.expression=&quot; . urlencode ( $object-&gt;functions [$k]-&gt;expression );
+            }
+            if (isset ( $object-&gt;functions [$k]-&gt;type ) &amp;&amp; is_string ( $object-&gt;functions [$k]-&gt;type )) {
+              $requestList [] = &quot;mtas.heatmap.&quot; . $i . &quot;.function.&quot; . $k . &quot;.type=&quot; . urlencode ( $object-&gt;functions [$k]-&gt;type );
+            }
+          }
+        }
+      }
       if (isset ( $object-&gt;maximum ) &amp;&amp; is_int ( $object-&gt;maximum )) {
         $requestList [] = &quot;mtas.heatmap.&quot; . $i . &quot;.maximum=&quot; . urlencode ( $object-&gt;maximum );
       }
@@ -5366,7 +5389,7 @@ class Parser {
    * @return array
    */
   private function createVariablesList($variables) {
-    foreach ( $ariables as $valueItem ) {
+    foreach ( $variables as $valueItem ) {
       $escapedItem = str_replace ( &quot;,&quot;, &quot;\\,&quot;, str_replace ( &quot;\\&quot;, &quot;\\\\&quot;, $valueItem ) );
       if(strpos($valueItem, &quot;\&quot;&quot;)!==false) {
         $escapedItem = str_replace ( &quot;\&quot;&quot;, &quot;\\\&quot;&quot;, $escapedItem );
