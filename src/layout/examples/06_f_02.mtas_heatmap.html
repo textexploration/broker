@@ -12,12 +12,16 @@
     <span class="obligatory">"heatmapField" : &lt;field&gt;</span>,
     <span class="obligatory">"queryField" : &lt;field&gt;</span>,
     <span class="obligatory">"queries" : [&lt;query&gt;]</span>,
+    <span class="optional">"functions": [&lt;function&gt;]</span>,
     <span class="optional">"geom" : &lt;string&gt;</span>,
     <span class="optional">"gridLevel" : &lt;integer&gt;</span>,
     <span class="optional">"distErrPct" : &lt;numeric&gt;</span>,
     <span class="optional">"distErr" : &lt;numeric&gt;</span>,
     <span class="optional">"maxCells" : &lt;numeric&gt;</span>,
     <span class="optional">"key" : &lt;string&gt;</span>,
+    <span class="optional">"type" : &lt;string&gt;</span>,
+    <span class="optional">"minimum" : &lt;integer&gt;</span>,
+    <span class="optional">"maximum" : &lt;integer&gt;</span>,
   },... 
 ]</pre>
 </div>
@@ -187,6 +191,16 @@
       </td>
     </tr>
   </table>
+</div>
+
+<div class="text">A <em>function</em> is of the form</div>
+
+<div class="code">
+  <pre>{
+  <span class="optional">"key" : &lt;string&gt;</span>,
+  <span class="obligatory">"expression" : &lt;string&gt;</span>,
+  <span class="optional">"type": &lt;string&gt;</span>,
+}</pre>
 </div>
 
 <div class="example">
