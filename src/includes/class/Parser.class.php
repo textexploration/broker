@@ -2799,6 +2799,7 @@ class Parser {
         "cql",
         "simple",
         "geojson",
+        "geofilt",
         "range",
         "join" 
     );
@@ -2810,7 +2811,8 @@ class Parser {
         "cql",
         "simple",
         "range",
-        "geojson"
+        "geojson",
+        "geofilt"
     );
     static $valueTypes = array (
         "equals",
@@ -2907,6 +2909,14 @@ class Parser {
                 $this->errors [] = "condition - {$key} should be string";
               } else if(!in_array($value, array("intersects", "iswithin", "contains", "isdisjointto"))) {
                 $this->errors [] = "condition - {$key} cannot be ".$value;
+              }
+            } else {
+              $this->warnings [] = "condition - {$key} not expected for type '{$object->type}'";
+            }
+          } else if ($key == "pt" || $key == "d") {
+            if ($object->type == "geofilt") {
+              if (! is_string ( $value )) {
+                $this->errors [] = "condition - {$key} should be string";
               }
             } else {
               $this->warnings [] = "condition - {$key} not expected for type '{$object->type}'";
@@ -3038,6 +3048,13 @@ class Parser {
           }
           if (! in_array ( "geometry", $keys )) {
             $this->errors [] = "condition - no geometry defined";
+          }
+        } else if ($object->type == "geofilt") {
+          if (! in_array ( "pt", $keys )) {
+            $this->errors [] = "condition - no pt defined";
+          }
+          if (! in_array ( "d", $keys )) {
+            $this->errors [] = "condition - no d defined";
           }
         } else if ($object->type == "collection") {
           if (! in_array ( "url", $keys )) {
@@ -5074,6 +5091,20 @@ class Parser {
           $value  = "IsDisjointTo(".$object->geometry.")";
         }
         $object->__query = $object->field . ":".$this->solrEncode ( $value, $object->type );
+        if (isset ( $object->not ) && $object->not) {
+          $object->__query = "(*:* NOT " . $object->__query . ")";
+        }
+      } else if ($object->type == "geofilt") {
+        if($object->predicate=="intersects") {
+          $value  = "Intersects(".$object->geometry.")";
+        } else if($object->predicate=="iswithin") {
+          $value  = "IsWithin(".$object->geometry.")";
+        } else if($object->predicate=="contains") {
+          $value  = "Contains(".$object->geometry.")";
+        } else if($object->predicate=="isdisjointto") {
+          $value  = "IsDisjointTo(".$object->geometry.")";
+        }
+        $object->__query = "{!geofilt sfield=\"".$object->field."\" pt=\"".$object->pt."\" d=\"".$object->d."\"}";
         if (isset ( $object->not ) && $object->not) {
           $object->__query = "(*:* NOT " . $object->__query . ")";
         }
