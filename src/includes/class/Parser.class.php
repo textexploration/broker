@@ -2913,10 +2913,18 @@ class Parser {
             } else {
               $this->warnings [] = "condition - {$key} not expected for type '{$object->type}'";
             }
-          } else if ($key == "pt" || $key == "d") {
+          } else if ($key == "pt") {
             if ($object->type == "geofilt") {
-              if (! is_string ( $value )) {
-                $this->errors [] = "condition - {$key} should be string";
+              if (! is_string ( $value ) ) {
+                $this->errors [] = "condition - {$key} should be string (x,y or lat,lon)";
+              }
+            } else {
+              $this->warnings [] = "condition - {$key} not expected for type '{$object->type}'";
+            }
+          } else if ($key == "d") {
+            if ($object->type == "geofilt") {
+              if (! is_string ( $value ) && !is_numeric($value)) {
+                $this->errors [] = "condition - {$key} should be string or numeric";
               }
             } else {
               $this->warnings [] = "condition - {$key} not expected for type '{$object->type}'";
