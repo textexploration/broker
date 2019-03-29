@@ -22,9 +22,9 @@ if (isset ( $_GET ["suboperation"] ) && is_string ( $_GET ["suboperation"] ) && 
       header ( "Access-Control-Allow-Headers: content-type" );
       $json_data = json_decode ( file_get_contents ( "php://input" ), true );
       $response = array ();
-      $respons ["status"] = "ERROR";
+      $response ["status"] = "ERROR";
       if ($json_data == null || json_last_error () !== JSON_ERROR_NONE) {
-        $response ["error"] = "no valid json";
+        $response ["error"] = "no valid json";        
       } else {
         try {
           $response = $status->start ( $json_data ["key"] );
