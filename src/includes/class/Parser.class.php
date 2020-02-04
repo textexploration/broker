@@ -1667,6 +1667,15 @@ class Parser {
             $this->errors [] = "mtas - {$key} should be array";
             unset ( $object->{$key} );
           }
+        } else if ($key == "index") {
+          if (!is_null($value) && is_array ( $value ))  {
+            for($i = 0; $i < count ( $value ); $i ++) {
+              $object->{$key} [$i] = $this->checkResponseMtasIndex ( $value [$i] );
+            }
+          } else {
+            $this->errors [] = "mtas - {$key} should be array";
+            unset ( $object->{$key} );
+          }
         } else if ($key == "heatmap") {
           if (!is_null($value) && is_array ( $value ))  {
             for($i = 0; $i < count ( $value ); $i ++) {
@@ -2130,6 +2139,110 @@ class Parser {
       return $object;
     } else {
       $this->warnings [] = "mtas - page - unexpected type";
+      return null;
+    }
+  }
+  /**
+   * Check mtas page
+   *
+   * @param object $object
+   * @return object
+   */
+  private function checkResponseMtasIndex($object) {
+    if ($object && is_object ( $object )) {
+      foreach ( $object as $key => $value ) {
+        if ($key == "field") {
+          if (! is_string ( $value )) {
+            $this->errors [] = "mtas - index - {$key} should be string";
+          } else {
+            $configurations = $this->getConfigurationsForField ( $value );
+            if (count ( $configurations ) > 0) {
+              $this->__configurations [] = $configurations;
+            } else {
+              $this->errors [] = "mtas - index - {$key} :  '" . $value . "' not found in any configuration";
+            }
+          }
+        } else if ($key == "key") {
+          if (! is_string ( $value )) {
+            $this->errors [] = "mtas - index - {$key} should be string";
+          }
+        } else if ($key == "match") {
+          if (! is_string ( $value )) {
+            $this->errors [] = "mtas - index - {$key} should be string";
+          } else if(!($value=="start" || $value=="complete" || $value=="intersect")) {
+            $this->errors [] = "mtas - index - {$key} should be 'start', 'complete' or 'intersect'";
+          }
+        } else if ($key == "block") {
+          if (! is_object ( $value )) {
+            $this->errors [] = "mtas - index - {$key} should be object";
+          } else {
+            foreach ( $value as $subkey => $subvalue ) {
+              if($subkey=="number" || $subkey == "size") {
+                if (! is_int ( $subvalue )) {
+                  $this->errors [] = "mtas - index - {$key} : {$subkey} should be integer";
+                }
+              } else if ($subkey == "query") {
+                  if (! is_object ( $value )) {
+                    $this->errors [] = "mtas - index - {$key} : {$subkey} should be object";
+                  } else {
+                    $object->{$key}->{$subkey} = $this->checkResponseMtasQuery ( $subvalue, "mtas - index - {$key} - {$subkey} - " );
+                  }
+              } else {
+                $this->warnings [] = "mtas - index - {$key} : {$subkey} not expected";
+              }
+            }
+            if (! isset ( $value->number ) && ! isset ( $value->size ) && ! isset ( $value->query )) {
+              $this->errors [] = "mtas - index - {$key} : size, number or query is obligatory";
+            } else if (isset ( $value->number ) && isset ( $value->size )) {
+              $this->errors [] = "mtas - index - {$key} : setting both size and number is not allowed";
+            } else if (isset ( $value->number ) && isset ( $value->query )) {
+              $this->errors [] = "mtas - index - {$key} : setting both number and query is not allowed";
+            } else if (isset ( $value->size ) && isset ( $value->query )) {
+              $this->errors [] = "mtas - index - {$key} : setting both size and query is not allowed";
+            }
+          }
+        } else if ($key == "list") {
+          if (! is_object ( $value )) {
+            $this->errors [] = "mtas - index - {$key} should be object";
+          } else {
+            foreach ( $value as $subkey => $subvalue ) {
+              if($subkey=="prefix" || $subkey=="sort") {
+                if (! is_string ( $subvalue )) {
+                  $this->errors [] = "mtas - index - {$key} : {$subkey} should be string";
+                }
+              } else if($subkey=="number") {
+                if (! is_int ( $subvalue )) {
+                  $this->errors [] = "mtas - index - {$key} : {$subkey} should be number";
+                }
+              } else {
+                $this->warnings [] = "mtas - index - {$key} : {$subkey} not expected";
+              }
+            }
+            if (! isset ( $value->prefix )) {
+              $this->errors [] = "mtas - index - {$key} : prefix is obligatory";
+            } 
+          }
+        } else if ($key == "query") {
+          if (! is_object ( $value )) {
+            $this->errors [] = "mtas - index - {$key} should be object";
+          } else {
+            $object->{$key} = $this->checkResponseMtasQuery ( $value, "mtas - index - {$key} - " );
+          }
+        } else {
+          $this->warnings [] = "mtas - index - {$key} not expected";
+        }
+      }
+      if (count ( $this->errors ) == 0) {
+        if (! isset ( $object->field )) {
+          $this->errors [] = "mtas - index - field is obligatory";
+        }
+        if (! isset ( $object->query )) {
+          $this->errors [] = "mtas - index - query is obligatory";
+        }
+      }
+      return $object;
+    } else {
+      $this->warnings [] = "mtas - index - unexpected type";
       return null;
     }
   }
@@ -4041,6 +4154,16 @@ class Parser {
               }
             }
           }
+        } else if ($key == "index") {
+          if ($value && is_array ( $value )) {
+            $requestList [] = "mtas.{$key}=true";
+            for($i = 0; $i < count ( $value ); $i ++) {
+              $object->{$key} [$i] = $this->parseResponseMtasIndex ( $object->{$key} [$i], $i );
+              if ($object->{$key} [$i] && is_object ( $object->{$key} [$i] ) && isset ( $object->{$key} [$i]->__requestList )) {
+                $requestList = array_merge ( $requestList, $object->{$key} [$i]->__requestList );
+              }
+            }
+          }
         } else if ($key == "heatmap") {
           if ($value && is_array ( $value )) {
             $requestList [] = "mtas.{$key}=true";
@@ -4509,6 +4632,102 @@ class Parser {
       }
       if (isset ( $object->start ) && is_int ( $object->start )) {
         $requestList [] = "mtas.page." . $i . ".end=" . urlencode ( $object->end );
+      }
+      $object->__requestList = $requestList;
+      return $object;
+    } else {
+      return null;
+    }
+  }
+  /**
+   * Parse mtas index
+   *
+   * @param object $object          
+   * @param number $i          
+   * @return object
+   */
+  private function parseResponseMtasIndex($object, $i) {
+    if ($object && is_object ( $object )) {
+      $requestList = array ();
+      if (isset ( $object->key ) && is_string ( $object->key )) {
+        $requestList [] = "mtas.index." . $i . ".key=" . urlencode ( $object->key );
+      }
+      if (isset ( $object->field ) && is_string ( $object->field )) {
+        $requestList [] = "mtas.index." . $i . ".field=" . urlencode ( $object->field );
+      }
+      if (isset ( $object->match) && is_string ( $object->match )) {
+        $requestList [] = "mtas.index." . $i . ".match=" . urlencode ( $object->match );
+      }      
+      if (isset ( $object->block ) && is_object ( $object->block )) {
+        if (isset ( $object->block->number ) && is_int ( $object->block->number )) {
+          $requestList [] = "mtas.index." . $i . ".block.number=" . urlencode ( $object->block->number );
+        }
+        if (isset ( $object->block->size ) && is_int ( $object->block->size )) {
+          $requestList [] = "mtas.index." . $i . ".block.size=" . urlencode ( $object->block->size );
+        }
+        if (isset ( $object->block->query ) && is_object ( $object->block->query )) {
+          if (isset ( $object->block->query->type ) && is_string ( $object->block->query->type )) {
+            $requestList [] = "mtas.index." . $i . ".block.query.type=" . urlencode ( $object->block->query->type );
+          }
+          if (isset ( $object->block->query->value ) && is_string ( $object->block->query->value )) {
+            $requestList [] = "mtas.index." . $i . ".block.query.value=" . urlencode ( $object->block->query->value );
+          }
+          if (isset ( $object->block->query->prefix ) && is_string ( $object->block->query->prefix )) {
+            $requestList [] = "mtas.index." . $i . ".block.query.prefix=" . urlencode ( $object->block->query->prefix );
+          }
+          if (isset ( $object->block->query->ignore ) && is_string ( $object->block->query->ignore )) {
+            $requestList [] = "mtas.index." . $i . ".block.query.ignore=" . urlencode ( $object->block->query->ignore );
+          }
+          if (isset ( $object->block->query->maximumIgnoreLength ) && is_int ( $object->block->query->maximumIgnoreLength )) {
+            $requestList [] = "mtas.index." . $i . ".block.query.maximumIgnoreLength=" . urlencode ( $object->block->query->maximumIgnoreLength );
+          }
+          if (isset ( $object->block->query->variables )) {
+            $counter = 0;
+            foreach ( $object->block->query->variables->__variables as $key => $value ) {
+              $values = $this->createVariablesList($value);
+              $requestList [] = "mtas.index." . $i . ".block.query.variable." . $counter . ".name=" . urlencode ( $key );
+              $requestList [] = "mtas.index." . $i . ".block.query.variable." . $counter . ".value=" . urlencode ( implode ( ",", $values ) );
+              $counter ++;
+            }
+          }
+        }
+      }
+      if (isset ( $object->list ) && is_object ( $object->list )) {
+        if (isset ( $object->list->prefix ) && is_string ( $object->list->prefix )) {
+          $requestList [] = "mtas.index." . $i . ".list.prefix=" . urlencode ( $object->list->prefix );
+        }
+        if (isset ( $object->list->sort ) && is_string ( $object->list->sort )) {
+          $requestList [] = "mtas.index." . $i . ".list.sort=" . urlencode ( $object->list->sort );
+        }
+        if (isset ( $object->list->number ) && is_int ( $object->list->number )) {
+          $requestList [] = "mtas.index." . $i . ".list.number=" . urlencode ( $object->list->number );
+        }
+      }
+      if (isset ( $object->query ) && is_object ( $object->query )) {
+        if (isset ( $object->query->type ) && is_string ( $object->query->type )) {
+          $requestList [] = "mtas.index." . $i . ".query.type=" . urlencode ( $object->query->type );
+        }
+        if (isset ( $object->query->value ) && is_string ( $object->query->value )) {
+          $requestList [] = "mtas.index." . $i . ".query.value=" . urlencode ( $object->query->value );
+        }
+        if (isset ( $object->query->prefix ) && is_string ( $object->query->prefix )) {
+          $requestList [] = "mtas.index." . $i . ".query.prefix=" . urlencode ( $object->query->prefix );
+        }
+        if (isset ( $object->query->ignore ) && is_string ( $object->query->ignore )) {
+          $requestList [] = "mtas.index." . $i . ".query.ignore=" . urlencode ( $object->query->ignore );
+        }
+        if (isset ( $object->query->maximumIgnoreLength ) && is_int ( $object->query->maximumIgnoreLength )) {
+          $requestList [] = "mtas.index." . $i . ".query.maximumIgnoreLength=" . urlencode ( $object->query->maximumIgnoreLength );
+        }
+        if (isset ( $object->query->variables )) {
+          $counter = 0;
+          foreach ( $object->query->variables->__variables as $key => $value ) {
+            $values = $this->createVariablesList($value);
+            $requestList [] = "mtas.index." . $i . ".query.variable." . $counter . ".name=" . urlencode ( $key );
+            $requestList [] = "mtas.index." . $i . ".query.variable." . $counter . ".value=" . urlencode ( implode ( ",", $values ) );
+            $counter ++;
+          }
+        }
       }
       $object->__requestList = $requestList;
       return $object;

@@ -1,0 +1,237 @@
+<div class="title">Mtas Index</div>
+
+<div class="text">
+  The mtas index section occurs within the <a data-tab="mtas">mtas</a> section,
+  and describes index results that should be included in the
+  response for the listed documents. The mtas index section is of the form
+</div>
+
+<div class="code">
+  <pre>[
+  {
+    <span class="obligatory">"field" : &lt;field&gt;</span>,
+    <span class="obligatory">"query" : &lt;query&gt;</span>,
+    <span class="optional">"key" : &lt;string&gt;</span>,
+    <span class="optional">"block" : &lt;block&gt;</span>,
+    <span class="optional">"match" : "intersect" / "start" / "complete"</span>,
+    <span class="optional">"list" : &lt;list&gt;</span>,    
+  },... 
+]</pre>
+</div>
+
+<div class="text">With <em>block</em> of the form</div>
+
+<div class="code">
+  <pre>[
+  {
+    <span class="optional">"number" : &lt;integer&gt;</span>,
+    <span class="optional">"size" : &lt;integer&gt;</span>,
+    <span class="optional">"query" : &lt;query&gt;</span>,
+  },... 
+]</pre>
+</div>
+
+<div class="text">And <em>list</em> of the form</div>
+
+<div class="code">
+  <pre>[
+  {
+    <span>"prefix" : &lt;string&gt;</span>,
+    <span class="optional">"number" : &lt;integer&gt;</span>,
+    <span class="optional">"sort" : "index" / "count" / "tfibf"</span>,
+  },... 
+]</pre>
+</div>
+
+
+<div class="example">
+  <table>
+    <tr>
+      <td class="button">
+        <button class="json">Example 'index'</button>
+        <div class="json">{ "condition" : { "type": "cql", "field"
+          : "::exampleFieldMtas(fieldName)::", "value" :
+          "[::exampleFieldMtasEscapedWordValue0(prefix=\"value\")::]"},
+          "response": 
+            { "documents": { "start":
+              0, "rows": 2, "fields": [ "::uniqueKey::", "::exampleFieldText(fieldName)::" ] },
+              "mtas": { 
+                "index" : [{
+                  "field": "::exampleFieldMtas(fieldName)::",
+                  "key": "example",
+                  "query": { "type": "cql", "value" : "[::exampleFieldMtasEscapedWordValue0(prefix=\"value\")::]"}
+                }]
+              }
+            }
+          }</div>
+      </td>
+      <td class="text">Get index for <em>[::exampleFieldMtasWordValue0(prefix=\"value\")::]</em> 
+      in <em>::exampleFieldMtas(fieldName)::</em>.
+      </td>
+    </tr>
+  </table>
+</div>  
+
+<div class="example">
+  <table>
+    <tr>
+      <td class="button">
+        <button class="json">Example 'block number'</button>
+        <div class="json">{ "condition" : { "type": "cql", "field"
+          : "::exampleFieldMtas(fieldName)::", "value" :
+          "[::exampleFieldMtasEscapedWordValue1(prefix=\"value\")::]"},
+          "response": 
+            { "documents": { "start":
+              0, "rows": 2, "fields": [ "::uniqueKey::", "::exampleFieldText(fieldName)::" ] },
+              "mtas": { 
+                "index" : [{
+                  "field": "::exampleFieldMtas(fieldName)::",
+                  "key": "example block number",
+                  "query": { "type": "cql", "value" : "[::exampleFieldMtasEscapedWordValue1(prefix=\"value\")::]"},
+                  "block" : { "number" : 2 }
+                }]
+              }
+            }
+          }</div>
+      </td>
+      <td class="text">Get index for <em>[::exampleFieldMtasWordValue1(prefix=\"value\")::]</em> 
+      in <em>::exampleFieldMtas(fieldName)::</em> with 2 blocks.
+      </td>
+    </tr>
+  </table>
+</div>
+
+<div class="example">
+  <table>
+    <tr>
+      <td class="button">
+        <button class="json">Example 'block size'</button>
+        <div class="json">{ "condition" : { "type": "cql", "field"
+          : "::exampleFieldMtas(fieldName)::", "value" :
+          "[::exampleFieldMtasEscapedWordValue1(prefix=\"value\")::]"},
+          "response": 
+            { "documents": { "start":
+              0, "rows": 2, "fields": [ "::uniqueKey::", "::exampleFieldText(fieldName)::" ] },
+              "mtas": { 
+                "index" : [{
+                  "field": "::exampleFieldMtas(fieldName)::",
+                  "key": "example block number",
+                  "query": { "type": "cql", "value" : "[::exampleFieldMtasEscapedWordValue1(prefix=\"value\")::]"},
+                  "block" : { "size" : 1000 }
+                }]
+              }
+            }
+          }</div>
+      </td>
+      <td class="text">Get index for <em>[::exampleFieldMtasWordValue1(prefix=\"value\")::]</em> 
+      in <em>::exampleFieldMtas(fieldName)::</em> with blocks of size 1000.
+      </td>
+    </tr>
+  </table>
+</div>
+
+<div class="example">
+  <table>
+    <tr>
+      <td class="button">
+        <button class="json">Example 'block query'</button>
+        <div class="json">{ "condition" : {"type": "and", "list": [
+          { "type": "cql", "field"
+          : "::exampleFieldMtas(fieldName)::", "value" :
+          "[::exampleFieldMtasEscapedWordValue1(prefix=\"value\")::]"},
+          { "type": "cql", "field"
+          : "::exampleFieldMtas(fieldName)::", "value" :
+          "&lt;s/&gt;"}
+        ]}, 
+          "response": 
+            { "documents": { "start":
+              0, "rows": 2, "fields": [ "::uniqueKey::", "::exampleFieldText(fieldName)::" ] },
+              "mtas": { 
+                "index" : [{
+                  "field": "::exampleFieldMtas(fieldName)::",
+                  "key": "example block number",
+                  "query": { "type": "cql", "value" : "[::exampleFieldMtasEscapedWordValue1(prefix=\"value\")::]"},
+                  "block" : { "query" : {"type": "cql", "value": "&lt;s/&gt;"} }
+                }]
+              }
+            }
+          }</div>
+      </td>
+      <td class="text">Get index for <em>[::exampleFieldMtasWordValue1(prefix=\"value\")::]</em> 
+      in <em>::exampleFieldMtas(fieldName)::</em> with blocks defined by <em>&lt;s/&gt;</em>.
+      </td>
+    </tr>
+  </table>
+</div>
+
+<div class="example">
+  <table>
+    <tr>
+      <td class="button">
+        <button class="json">Example 'match'</button>
+        <div class="json">{ "condition" : {"type": "and", "list": [
+          { "type": "cql", "field"
+          : "::exampleFieldMtas(fieldName)::", "value" :
+          "[::exampleFieldMtasEscapedWordValue1(prefix=\"value\")::]"},
+          { "type": "cql", "field"
+          : "::exampleFieldMtas(fieldName)::", "value" :
+          "&lt;s/&gt;"}
+        ]}, 
+          "response": 
+            { "documents": { "start":
+              0, "rows": 2, "fields": [ "::uniqueKey::", "::exampleFieldText(fieldName)::" ] },
+              "mtas": { 
+                "index" : [{
+                  "field": "::exampleFieldMtas(fieldName)::",
+                  "key": "example block number",
+                  "query": { "type": "cql", "value" : "&lt;s/&gt;"},
+                  "block" : { "query" : {"type": "cql", "value": "&lt;s&gt;[]"} },
+                  "match" : "start"
+                }]
+              }
+            }
+          }</div>
+      </td>
+      <td class="text">Get index for <em>&lt;s/&gt;</em> 
+      in <em>::exampleFieldMtas(fieldName)::</em> with blocks defined by <em>&lt;s&gt;[]</em>
+      and <em>match</em> defined as <em>start</em>.
+      </td>
+    </tr>
+  </table>
+</div>
+
+<div class="example">
+  <table>
+    <tr>
+      <td class="button">
+        <button class="json">Example 'list'</button>
+        <div class="json">{ "condition" : {"type": "and", "list": [
+          { "type": "cql", "field"
+          : "::exampleFieldMtas(fieldName)::", "value" :
+          "[::exampleFieldMtasEscapedWordValue1(prefix=\"value\")::]"},
+          { "type": "cql", "field"
+          : "::exampleFieldMtas(fieldName)::", "value" :
+          "&lt;s/&gt;"}
+        ]}, 
+          "response": 
+            { "documents": { "start":
+              0, "rows": 2, "fields": [ "::uniqueKey::", "::exampleFieldText(fieldName)::" ] },
+              "mtas": { 
+                "index" : [{
+                  "field": "::exampleFieldMtas(fieldName)::",
+                  "key": "example block number",
+                  "query": { "type": "cql", "value" : "[::exampleFieldMtasEscapedWordValue1(prefix=\"value\")::]"},
+                  "block" : { "query" : {"type": "cql", "value": "&lt;s/&gt;"} },
+                  "list" : {"prefix": "lemma,pos"}
+                }]
+              }
+            }
+          }</div>
+      </td>
+      <td class="text">Get index for <em>[::exampleFieldMtasWordValue1(prefix=\"value\")::]</em> 
+      in <em>::exampleFieldMtas(fieldName)::</em> with blocks defined by <em>&lt;s/&gt;</em> 
+      and show list of <em>lemma</em> and <em>pos</em>.
+      </td>
+    </tr>
+  </table>
+</div>
