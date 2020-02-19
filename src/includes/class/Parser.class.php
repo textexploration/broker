@@ -5669,7 +5669,19 @@ class Parser {
           if (in_array ( $field, $data ["fields"] )) {
             $list [] = $configuration;
           } else {
-            // do nothing
+            foreach($data["dynamicFields"] AS $dynamicField) {
+              if(preg_match("/\*$/",$dynamicField)) {
+                if(substr($field,0,strlen($dynamicField)-1)."*"==$dynamicField) {
+                  $list [] = $configuration;
+                  break;
+                }
+              } else if(preg_match("/^\*/",$dynamicField)) {
+                if("*".substr($field,0,strlen($dynamicField)-1)==$dynamicField) {
+                  $list [] = $configuration;
+                  break;
+                }
+              }
+            }
           }
         }
       }
